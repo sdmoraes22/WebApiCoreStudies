@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MinhaPrimeiraApi.Controllers
 {
     [Route("api/[controller]")]
+    [ApiConventionType(typeof(DefaultApiConventions))]
     public class ValuesController : MainController
     {
         // GET api/values
@@ -49,18 +47,28 @@ namespace MinhaPrimeiraApi.Controllers
 
         // POST api/values
         [HttpPost]
-        [ProducesResponseType(typeof(Product), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        // [ApiConventionMethod( typeof(DefaultApiConventions), nameof(DefaultApiConventions.Post))]
         public ActionResult Post(Product product)
         {
             if(product.Id == 0) return BadRequest();
+
+            //add no banco
+            // return Ok();
             return CreatedAtAction(nameof(Post), product);
         }
 
         // PUT api/values/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromForm] Product value)
+        [HttpPost]
+        // [ApiConventionMethod( typeof(DefaultApiConventions), nameof(DefaultApiConventions.Put))]
+        public ActionResult Put(int id, [FromForm] Product product)
         {
+            if(!ModelState.IsValid) return BadRequest();
+
+            if(id != product.Id)
+                return NotFound();
+
+            return NoContent();
         }
 
         // DELETE api/values/5
