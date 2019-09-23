@@ -9,8 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace MinhaPrimeiraApi.Controllers
 {
     [Route("api/[controller]")]
-    [ApiController]
-    public class ValuesController : ControllerBase
+    public class ValuesController : MainController
     {
         // GET api/values
         [HttpGet]
@@ -18,8 +17,8 @@ namespace MinhaPrimeiraApi.Controllers
         {
             var valores = new string[] { "value1", "value2" };
             if(valores.Length < 5000) 
-                return BadRequest();
-            return Ok(valores); 
+                return CustomResponse();
+            return CustomResponse(valores); 
         }
         
         [HttpGet("obter-resultados")]
@@ -69,6 +68,38 @@ namespace MinhaPrimeiraApi.Controllers
         public void Delete([FromQuery]int id)
         {
         }
+    }
+
+    [ApiController]
+    public abstract class MainController : ControllerBase
+    {
+        protected ActionResult CustomResponse(object result = null)
+        {
+            if(OperacaoValida())
+                return Ok(new {
+                    sucess = true,
+                    data = result
+                });
+            
+            return BadRequest(new {
+                sucess = false,
+                errors = ObterErros()
+            });
+
+        }
+
+        protected string ObterErros()
+        {
+            return "Deu Ruim cachoeira";
+        }
+
+        public bool OperacaoValida()
+        {
+            // as validações
+
+            return true;
+        }
+        
     }
 
     public class Product
