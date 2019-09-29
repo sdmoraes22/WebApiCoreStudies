@@ -6,6 +6,7 @@ using AutoMapper;
 using DevIO.Api.ViewModels;
 using DevIO.Business.Interfaces;
 using DevIO.Business.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DevIO.Api.Controllers
@@ -62,26 +63,69 @@ namespace DevIO.Api.Controllers
 
         }
 
-        [HttpPut("{id:guid}")]
-        public async Task<ActionResult<ProdutoViewModel>> CriarProduto(Guid id, ProdutoViewModel produtoViewModel)
+        [RequestSizeLimit(40000000)]
+        [HttpPost("Adicionar")]
+        public async Task<ActionResult<ProdutoViewModel>> CriarProdutoAlt(ProdutoImagemViewModel produtoImagemViewModel, IFormFile ImagemUpload)
         {
-            if(id != produtoViewModel.Id) return BadRequest();
+            produtoImagemViewModel.ImagemUpload = ImagemUpload;
+            if(!ModelState.IsValid) return CustomResponse(ModelState);
+
+            var imgPrefix = Guid.NewGuid() + "_";
+
+            if(!await UploadArquivoAlternativo(produtoImagemViewModel.ImagemUpload, imgPrefix))
+            {
+                return CustomResponse(produtoImagemViewModel);
+            }
+
+            produtoImagemViewModel.Imagem = imgPrefix + produtoImagemViewModel.ImagemUpload.FileName;
+
+            await _produtosService.Adicionar(_mapper.Map<Produto>(produtoImagemViewModel));
+
+            return CustomResponse(produtoImagemViewModel);
+
+        }
+
+        [RequestSizeLimit(40000000)]
+        [HttpPost("imagem")]
+        public async Task<ActionResult> AdicionarImagem(IFormFile file)
+        {
+            return Ok();
+        }
+
+
+        [HttpPut("{id:guid}")]
+        public async Task<ActionResult<ProdutoViewModel>> Atualizar(Guid id, ProdutoViewModel produtoViewModel)
+        {
+            if(id != produtoViewModel.Id) 
+            {
+                NotificarErro("Os ids informados não são iguais.");
+                return CustomResponse();
+            }
+
+            var produtoAtualizacao = await ObterProduto(id);
+
+            produtoViewModel.Imagem = produtoAtualizacao.Imagem;
 
             if(!ModelState.IsValid) return CustomResponse(ModelState);
 
-            var imagemNome = Guid.NewGuid() + "_" + produtoViewModel.Imagem;
-
-            if(!UploadArquivo(produtoViewModel.ImagemUpload, imagemNome))
+            if(produtoViewModel.ImagemUpload != null)
             {
-                return CustomResponse(produtoViewModel);
+                var imagemNome = Guid.NewGuid() + "_" + produtoViewModel.Imagem;
+                if(!UploadArquivo(produtoViewModel.ImagemUpload, imagemNome))
+                {
+                    return CustomResponse(ModelState);
+                }
+                produtoAtualizacao.Imagem = imagemNome;
             }
+            produtoAtualizacao.Nome = produtoViewModel.Nome;
+            produtoAtualizacao.Descricao = produtoViewModel.Descricao;
+            produtoAtualizacao.Valor = produtoViewModel.Valor;
+            produtoAtualizacao.Ativo = produtoViewModel.Ativo;
 
-            produtoViewModel.Imagem = imagemNome;
-
-            await _produtosService.Atualizar(_mapper.Map<Produto>(produtoViewModel));
+            await _produtosService.Atualizar(_mapper.Map<Produto>(produtoAtualizacao));
 
             return CustomResponse(produtoViewModel);
-
+            
         }
 
         [HttpDelete]
@@ -121,6 +165,32 @@ namespace DevIO.Api.Controllers
             }
 
             System.IO.File.WriteAllBytes(filePath, imgByteDataArray);
+
+            return true;
+        }
+
+        private async Task<bool> UploadArquivoAlternativo(IFormFile arquivo, string ImgPrefixo)
+        {
+
+            if(arquivo == null || arquivo.Length == 0)
+            {
+                NotificarErro("Forneça uma imagem para este produto!");
+                return false;
+            }
+            
+
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/imagens", ImgPrefixo + arquivo.FileName);
+            
+            if(System.IO.File.Exists(filePath))
+            {
+                NotificarErro("Já existe um arquivo com esse nome");
+                return false;
+            }
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await arquivo.CopyToAsync(stream);
+            }
 
             return true;
         }
