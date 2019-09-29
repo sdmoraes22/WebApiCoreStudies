@@ -36,6 +36,8 @@ namespace DevIO.Api
 
             services.AddAutoMapper(typeof(Startup));
 
+            services.AddIdentityConfiguration(Configuration);
+
             services.WebApiConfig();
             
             services.ResolveDependencies();
@@ -54,6 +56,7 @@ namespace DevIO.Api
                 app.UseHsts();
             }
 
+            app.UseAuthentication();
             app.UseMvcConfiguration();            
         }
     }
