@@ -3,14 +3,17 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using AutoMapper;
+using DevIO.Api.Extensions;
 using DevIO.Api.ViewModels;
 using DevIO.Business.Interfaces;
 using DevIO.Business.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DevIO.Api.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     public class ProdutosController : MainController
     {
@@ -27,12 +30,14 @@ namespace DevIO.Api.Controllers
             _mapper = mapper;
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public async Task<IEnumerable<ProdutoViewModel>> ObterTodos()
         {
             return  _mapper.Map<IEnumerable<ProdutoViewModel>>(await _produtoRepository.ObterProdutosFornecedores());
         }
 
+        [AllowAnonymous]
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<ProdutoViewModel>> ObterPorId(Guid id)
         {
@@ -43,6 +48,7 @@ namespace DevIO.Api.Controllers
             return Ok(produtoViewModel);
         }
 
+        [ClaimsAuthorize("Produto", "Adicionar")]
         [HttpPost]
         public async Task<ActionResult<ProdutoViewModel>> CriarProduto(ProdutoViewModel produtoViewModel)
         {
@@ -63,6 +69,7 @@ namespace DevIO.Api.Controllers
 
         }
 
+        [ClaimsAuthorize("Produto", "Adicionar")]
         [RequestSizeLimit(40000000)]
         [HttpPost("Adicionar")]
         public async Task<ActionResult<ProdutoViewModel>> CriarProdutoAlt(ProdutoImagemViewModel produtoImagemViewModel, IFormFile ImagemUpload)
@@ -91,8 +98,8 @@ namespace DevIO.Api.Controllers
         {
             return Ok();
         }
-
-
+        
+        [ClaimsAuthorize("Produto", "Atualizar")]
         [HttpPut("{id:guid}")]
         public async Task<ActionResult<ProdutoViewModel>> Atualizar(Guid id, ProdutoViewModel produtoViewModel)
         {
@@ -128,6 +135,7 @@ namespace DevIO.Api.Controllers
             
         }
 
+        [ClaimsAuthorize("Produto", "Excluir")]
         [HttpDelete]
         public async Task<ActionResult<ProdutoViewModel>> Excluir(Guid id)
         {
