@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using DevIO.Api.Extensions;
 using Microsoft.AspNetCore.Http;
