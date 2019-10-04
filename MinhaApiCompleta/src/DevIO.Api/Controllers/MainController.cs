@@ -1,6 +1,8 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using DevIO.Business.Interfaces;
 using DevIO.Business.Notifications;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -10,10 +12,20 @@ namespace DevIO.Api.Controllers
     public abstract class MainController : ControllerBase 
     {
         private readonly INotificador _notificador;
+        public readonly IUser _appUser;
+        protected Guid UsuarioId { get; set; }
+        protected bool UsuarioAutenticado { get; set; }
 
-        public MainController(INotificador notificador)
+        public MainController(INotificador notificador, IUser appUser)
         {
+            _appUser = appUser;
             _notificador = notificador;
+
+            if(_appUser.IsAuthenticated())
+            {
+                UsuarioId = _appUser.GetUserId();
+                UsuarioAutenticado = true;
+            }
         }
 
         protected void NotificarErroModelInvalida(ModelStateDictionary modelState)
