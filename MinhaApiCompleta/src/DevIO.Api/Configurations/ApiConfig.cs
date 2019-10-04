@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Net.Http.Headers;
 
 namespace DevIO.Api.Configurations
 {
@@ -19,10 +20,21 @@ namespace DevIO.Api.Configurations
             services.AddCors(options =>
             {
                 options.AddPolicy("Development",
-                                builder => builder.AllowAnyOrigin()
-                                                  .AllowAnyMethod()
-                                                  .AllowAnyHeader()
-                                                  .AllowCredentials());
+                            builder => 
+                                builder
+                                    .AllowAnyOrigin()
+                                    .AllowAnyMethod()
+                                    .AllowAnyHeader()
+                                    .AllowCredentials());
+                
+                options.AddPolicy("Production",
+                            builder => 
+                                builder
+                                    .WithMethods("GET")
+                                    .WithOrigins("http://localhost")
+                                    .SetIsOriginAllowedToAllowWildcardSubdomains()
+                                    // .WithHeaders(HeaderNames.ContentType, "x-custom-header")
+                                    .AllowAnyHeader());
             });
             return services;
         }
