@@ -10,6 +10,7 @@ using DevIO.Api.ViewModels;
 using DevIO.Business.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -19,19 +20,21 @@ namespace DevIO.Api.V1.Controllers
     [Route("api/v{version:apiVersion}")]
     public class AuthController : MainController
     {
-
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly UserManager<IdentityUser> _userManager;
         public readonly AppSettings _appSettings;
+        public readonly ILogger _logger;
         public AuthController(INotificador notificador, 
                               SignInManager<IdentityUser> signInManager, 
                               IOptions<AppSettings> appSettings, 
                               UserManager<IdentityUser> userManager,
-                              IUser user) : base(notificador, user)
+                              IUser user,
+                              ILogger<AuthController> logger) : base(notificador, user)
         {
             _appSettings = appSettings.Value;
             _signInManager = signInManager;
             _userManager = userManager;
+            _logger = logger;
         }
 
         [HttpPost("nova-conta")]
@@ -70,6 +73,7 @@ namespace DevIO.Api.V1.Controllers
 
             if(result.Succeeded)
             {
+                _logger.LogInformation($"Usuário {loginUser.Email} logado com sucesso.");
                 return CustomResponse(await GerarJwt(loginUser.Email));
             }
             if(result.IsLockedOut)
