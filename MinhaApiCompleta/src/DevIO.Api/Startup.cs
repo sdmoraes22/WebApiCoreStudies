@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using DevIO.Api.Configurations;
+using DevIO.Api.Extensions;
 using DevIO.Data.Context;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -22,6 +23,7 @@ namespace DevIO.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddLoggerConfiguration();
             services.AddDbContext<MeuDbContext>(options => 
             {
                 options.UseMySql(Configuration.GetConnectionString("DefaultConnection"));
@@ -53,7 +55,9 @@ namespace DevIO.Api
             }
 
             app.UseAuthentication();
+            app.UseMiddleware<ExceptionMiddleware>();
             app.UseMvcConfiguration();
+            app.UseLoggerConfiguration();
 
             app.UseSwaggerConfig(provider);
         }
