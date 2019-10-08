@@ -20,10 +20,9 @@ namespace DevIO.Api
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddLoggerConfiguration();
+            services.AddLoggerConfiguration(Configuration);
             services.AddDbContext<MeuDbContext>(options => 
             {
                 options.UseMySql(Configuration.GetConnectionString("DefaultConnection"));
@@ -40,7 +39,6 @@ namespace DevIO.Api
             services.ResolveDependencies();
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, IApiVersionDescriptionProvider provider)
         {
             if (env.IsDevelopment())
@@ -55,11 +53,15 @@ namespace DevIO.Api
             }
 
             app.UseAuthentication();
+            
             app.UseMiddleware<ExceptionMiddleware>();
+            
             app.UseMvcConfiguration();
+            
             app.UseLoggerConfiguration();
-
+            
             app.UseSwaggerConfig(provider);
+
         }
     }
 }
